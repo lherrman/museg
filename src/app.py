@@ -215,6 +215,7 @@ class MuSegApp(QMainWindow):
         self.right_panel.label_segment_selected.connect(self._select_label_segment)
         self.right_panel.label_segment_deleted.connect(self._delete_label_segment)
         self.right_panel.label_segment_moved.connect(self._move_label_segment)
+        self.right_panel.loading_state_changed.connect(self._on_loading_state_changed)
 
         # Media player signals
         self.media_player.positionChanged.connect(self._on_position_changed)
@@ -379,6 +380,15 @@ class MuSegApp(QMainWindow):
             state: New playback state
         """
         self.right_panel.set_playback_state(state)
+
+    def _on_loading_state_changed(self, is_loading: bool) -> None:
+        """
+        Handle waveform loading state changes to enable/disable track list.
+
+        Args:
+            is_loading: True when loading, False when done
+        """
+        self.left_panel.set_loading_state(is_loading)
 
     def _update_position(self) -> None:
         """Update position display (called by timer)."""

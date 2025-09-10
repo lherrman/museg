@@ -77,7 +77,9 @@ class LeftPanel(QFrame):
 
     def _on_track_selected(self, file_path: str) -> None:
         """Handle track selection to enable/disable remove button."""
-        self.remove_button.setEnabled(bool(file_path))
+        # Only enable remove button if not loading and a file is selected
+        is_loading = not self.music_list.isEnabled()
+        self.remove_button.setEnabled(not is_loading and bool(file_path))
 
     def refresh_music_list(self, file_paths: list) -> None:
         """
@@ -103,3 +105,16 @@ class LeftPanel(QFrame):
             True if file was found and selected
         """
         return self.music_list.select_file(file_path)
+
+    def set_loading_state(self, is_loading: bool) -> None:
+        """
+        Enable or disable the track list based on loading state.
+
+        Args:
+            is_loading: True to disable the list during loading, False to enable
+        """
+        self.music_list.setEnabled(not is_loading)
+        self.add_button.setEnabled(not is_loading)
+        self.remove_button.setEnabled(
+            not is_loading and bool(self.get_selected_file_path())
+        )

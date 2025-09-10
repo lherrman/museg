@@ -30,6 +30,7 @@ class RightPanel(QWidget):
     label_segment_moved = Signal(
         int, float, float
     )  # segment_index, new_start_time, new_end_time
+    loading_state_changed = Signal(bool)  # True when loading, False when done
 
     def __init__(self, parent=None):
         """Initialize the right panel."""
@@ -135,6 +136,9 @@ class RightPanel(QWidget):
         # Show loading state in waveform
         self.waveform_widget.show_loading_state(track_name)
 
+        # Emit loading state signal
+        self.loading_state_changed.emit(True)
+
     def set_track_loaded(self, track_name: str) -> None:
         """
         Set the track info to loaded state.
@@ -145,6 +149,9 @@ class RightPanel(QWidget):
         self._current_track_name = track_name
         self.track_info.setText(f"♪ {track_name}")
 
+        # Emit loading done signal
+        self.loading_state_changed.emit(False)
+
     def set_track_error(self, error_message: str) -> None:
         """
         Set the track info to error state.
@@ -153,6 +160,9 @@ class RightPanel(QWidget):
             error_message: Error message to display
         """
         self.track_info.setText(f"Error: {error_message}")
+
+        # Emit loading done signal (even on error)
+        self.loading_state_changed.emit(False)
 
     def load_audio_data(self, audio_data: AudioData) -> bool:
         """
