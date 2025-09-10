@@ -47,6 +47,7 @@ class AppConfig:
         if not config_file.exists():
             cls._create_default_label_config(config_file)
 
+
     @classmethod
     def get_project_directory(cls) -> Optional[Path]:
         """Get the current project directory."""
@@ -150,7 +151,7 @@ class AppConfig:
             return None
         else:
             # Development environment
-            icon_path = Path(__file__).parent / "assets" / "icon.png"
+            icon_path = Path(__file__).parent.parent / "assets" / "icon.png"
             return icon_path if icon_path.exists() else None
 
 
