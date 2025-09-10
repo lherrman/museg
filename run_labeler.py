@@ -13,6 +13,6 @@ sys.path.insert(0, str(src_dir))
 
 if __name__ == "__main__":
     # Import and run the main application
-    from labler.app import main
+    from src.app import main
 
     main()

@@ -47,7 +47,7 @@ New-Item -ItemType Directory -Force -Path "build" | Out-Null
 
 # Prepare icon for executable
 $IconPath = "build\app_icon.ico"
-$SourceIconPath = "src\labler\assets\icon.ico"
+$SourceIconPath = "src\assets\icon.ico"
 
 if (Test-Path $SourceIconPath) {
     Write-Info "Using existing ICO icon from assets..."
@@ -55,7 +55,7 @@ if (Test-Path $SourceIconPath) {
 } else {
     Write-Warning "ICO icon not found at $SourceIconPath"
     # Fallback to PNG conversion if ICO not available
-    $PngIconPath = "src\labler\assets\icon.png"
+    $PngIconPath = "src\assets\icon.png"
     if (Test-Path $PngIconPath) {
         Write-Info "Converting PNG icon to ICO format..."
         $IconScript = @"
@@ -126,7 +126,7 @@ $PyInstallerArgs += @(
 
 # Additional data files and folders to include
 $PyInstallerArgs += @(
-    "--add-data=$(Resolve-Path 'src\labler\assets\icon.png');assets"
+    "--add-data=$(Resolve-Path 'src\assets\icon.png');assets"
 )
 
 Write-Info "Building executable with PyInstaller..."
