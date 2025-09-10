@@ -173,7 +173,11 @@ class MuSegApp(QMainWindow):
         """Update the mode indicator in the status bar."""
         if hasattr(self, "label_manager"):
             mode = self.label_manager.get_labeling_mode()
-            mode_text = f"Mode: {mode.title()}"
+            mode_text = ""
+            project_directory = AppConfig.get_project_directory()
+            if project_directory:
+                mode_text += f"Project: {project_directory.name} | "
+            mode_text += f"Mode: {mode.title()}"
             if mode == "segmentation":
                 mode_text += " (Connected segments)"
             else:
