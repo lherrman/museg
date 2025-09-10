@@ -1,0 +1,21 @@
+# Music Segment Labeler - Standalone Application
+# This file lists the dependencies for the standalone application
+
+[project]
+name = "music-labeler"
+version = "0.1.0"
+description = "A modern Qt application for music segment labeling"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "librosa>=0.11.0",
+    "matplotlib>=3.10.6",
+    "numpy>=2.2.6",
+    "pyside6>=6.9.2",
+    "soundfile>=0.13.1",
+]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.15.0",
+]
