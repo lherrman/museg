@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QLabel,
 )
 from PySide6.QtCore import Qt, QTimer, QUrl
-from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent, QIcon
+from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent, QIcon, QDesktopServices
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 from .core.config import AppConfig, UIStyles
@@ -35,6 +35,9 @@ class MuSegApp(QMainWindow):
 
         # Setup window
         self._setup_window()
+
+        # Create default project directories
+        AppConfig.set_project_directory(Path.cwd() / "projects" / "default")
 
         # Initialize core components
         self._init_audio_system()
@@ -134,6 +137,11 @@ class MuSegApp(QMainWindow):
         open_project_action = QAction("Open Project...", self)
         open_project_action.triggered.connect(self._show_open_project_dialog)
         file_menu.addAction(open_project_action)
+
+        # Open Project Folder action
+        open_folder_action = QAction("Open Project Folder...", self)
+        open_folder_action.triggered.connect(self._open_project_folder_dialog)
+        file_menu.addAction(open_folder_action)
 
         # Project menu
         project_menu = menubar.addMenu("Project")
@@ -728,6 +736,12 @@ class MuSegApp(QMainWindow):
             QMessageBox.critical(
                 self, "Error Creating Project", f"Failed to create project:\n{str(e)}"
             )
+
+    def _open_project_folder_dialog(self) -> None:
+        """Show dialog to open the project folder."""
+        if AppConfig._current_project_dir:
+            project_dir = AppConfig._current_project_dir
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(project_dir)))
 
     def _show_label_editor(self) -> None:
         """Show the label editor dialog."""
