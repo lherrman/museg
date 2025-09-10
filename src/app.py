@@ -26,22 +26,6 @@ from .audio import AudioWorker, AudioData
 from .ui import LeftPanel, RightPanel
 
 
-def get_icon_path() -> Optional[Path]:
-    """Get the path to the application icon, handling both dev and bundled environments."""
-    # Check if running as PyInstaller bundle
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        # PyInstaller bundle - try to find bundled icon first
-        bundled_icon = Path(sys._MEIPASS) / "assets" / "icon.png"  # type: ignore
-        if bundled_icon.exists():
-            return bundled_icon
-        # Fallback to using embedded exe icon (return None to use default)
-        return None
-    else:
-        # Development environment
-        icon_path = Path(__file__).parent / "assets" / "icon.png"
-        return icon_path if icon_path.exists() else None
-
-
 class MuSegApp(QMainWindow):
     """Main application window for the MuSeg Audio Annotation Tool."""
 
@@ -82,7 +66,7 @@ class MuSegApp(QMainWindow):
         self.setMinimumSize(*AppConfig.MIN_WINDOW_SIZE)
 
         # Set application icon
-        icon_path = get_icon_path()
+        icon_path = AppConfig.get_icon_path()
         if icon_path:
             self.setWindowIcon(QIcon(str(icon_path)))
 
@@ -692,24 +676,24 @@ class MuSegApp(QMainWindow):
             self._create_new_project(Path(project_dir))
 
     def _show_open_project_dialog(self) -> None:
-        """Show dialog to open an existing project by selecting label_config.json."""
+        """Show dialog to open an existing project by selecting musegproject.json."""
         config_file, _ = QFileDialog.getOpenFileName(
             self,
-            "Open Project - Select label_config.json",
+            "Open Project - Select musegproject.json",
             "",
             "JSON Files (*.json);;All Files (*)",
         )
 
         if config_file:
             config_path = Path(config_file)
-            if config_path.name == "label_config.json":
+            if config_path.name == "musegproject.json":
                 project_dir = config_path.parent
                 self._set_project_directory(project_dir)
             else:
                 QMessageBox.warning(
                     self,
                     "Invalid Project File",
-                    "Please select a label_config.json file.",
+                    "Please select a musegproject.json file.",
                 )
 
     def _create_new_project(self, project_dir: Path) -> None:
@@ -718,7 +702,7 @@ class MuSegApp(QMainWindow):
             # Create project structure
             music_dir = project_dir / "music"
             labels_dir = project_dir / "labels"
-            config_file = project_dir / "label_config.json"
+            config_file = project_dir / "musegproject.json"
 
             # Create directories
             music_dir.mkdir(parents=True, exist_ok=True)
@@ -919,7 +903,7 @@ def create_app() -> QApplication:
     app.setOrganizationName(AppConfig.ORGANIZATION_NAME)
 
     # Set global application icon
-    icon_path = get_icon_path()
+    icon_path = AppConfig.get_icon_path()
     if icon_path:
         app.setWindowIcon(QIcon(str(icon_path)))
 

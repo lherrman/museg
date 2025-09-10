@@ -373,7 +373,7 @@ class LabelManager(QObject):
         self.labels_directory.mkdir(parents=True, exist_ok=True)
 
         # Update label configuration path
-        config_file = project_dir / "label_config.json"
+        config_file = project_dir / "musegproject.json"
         self.label_config = LabelConfig(config_file)
 
         # Clear current track labels as they're from the old project

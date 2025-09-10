@@ -1,5 +1,6 @@
 """Configuration constants for the Music Segment Labeler application."""
 
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -45,6 +46,11 @@ class AppConfig:
         config_file = cls.get_label_config_file()
         if not config_file.exists():
             cls._create_default_label_config(config_file)
+
+    @classmethod
+    def get_project_directory(cls) -> Optional[Path]:
+        """Get the current project directory."""
+        return cls._current_project_dir
 
     @staticmethod
     def _create_default_label_config(config_file: Path) -> None:
@@ -128,8 +134,24 @@ class AppConfig:
     def get_label_config_file(cls) -> Path:
         """Get the label configuration file path."""
         if cls._current_project_dir:
-            return cls._current_project_dir / "label_config.json"
-        return Path(__file__).parent.parent.parent.parent / "label_config.json"
+            return cls._current_project_dir / "musegproject.json"
+        return Path(__file__).parent.parent.parent.parent / "musegproject.json"
+
+    @staticmethod
+    def get_icon_path() -> Optional[Path]:
+        """Get the path to the application icon, handling both dev and bundled environments."""
+        # Check if running as PyInstaller bundle
+        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+            # PyInstaller bundle - try to find bundled icon first
+            bundled_icon = Path(sys._MEIPASS) / "assets" / "icon.png"  # type: ignore
+            if bundled_icon.exists():
+                return bundled_icon
+            # Fallback to using embedded exe icon (return None to use default)
+            return None
+        else:
+            # Development environment
+            icon_path = Path(__file__).parent / "assets" / "icon.png"
+            return icon_path if icon_path.exists() else None
 
 
 class UIColors:

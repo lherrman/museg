@@ -2,6 +2,7 @@
 
 import sys
 from typing import Optional
+
 from pathlib import Path
 from PySide6.QtWidgets import (
     QDialog,
@@ -25,22 +26,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QIcon
 
 from ..core.label_manager import LabelManager
-
-
-def get_icon_path() -> Optional[Path]:
-    """Get the path to the application icon, handling both dev and bundled environments."""
-    # Check if running as PyInstaller bundle
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        # PyInstaller bundle - try to find bundled icon first
-        bundled_icon = Path(sys._MEIPASS) / "assets" / "icon.png"  # type: ignore
-        if bundled_icon.exists():
-            return bundled_icon
-        # Fallback to using embedded exe icon (return None to use default)
-        return None
-    else:
-        # Development environment
-        icon_path = Path(__file__).parent.parent / "assets" / "icon.png"
-        return icon_path if icon_path.exists() else None
+from ..core.config import AppConfig
 
 
 class LabelEditor(QDialog):
@@ -57,7 +43,7 @@ class LabelEditor(QDialog):
         self.resize(500, 600)
 
         # Set application icon
-        icon_path = get_icon_path()
+        icon_path = AppConfig.get_icon_path()
         if icon_path:
             self.setWindowIcon(QIcon(str(icon_path)))
 
