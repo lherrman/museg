@@ -1,6 +1,6 @@
-# MuSeg Audio Annotation Tool
+# museg Audio Annotation Tool
 
-MuSeg is a intuitive audio annotation tool designed for segmentation and labeling of audio files for machine learning datasets.
+museg is an python Qt application for audio labeling and segmentation for machine learning datasets.
 
 ## Features
 
