@@ -204,7 +204,7 @@ class LabelBar(QWidget):
                 font.setBold(True)
                 painter.setFont(font)
 
-                text = label_def.name if label_def else segment.label_id
+                text = label_def.name if label_def else str(segment.label_id)
                 painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, text)
 
             # Highlight boundaries if hovering or dragging

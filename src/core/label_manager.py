@@ -178,14 +178,20 @@ class TrackLabels(QObject):
 
             # Check for key names in the first segment to determine the format
             first_segment = segments_data[0]
-            
-            id_key_candidates = ["label", "segment_id"]
+
+            id_key_candidates = ["label", "phrase_type"]
             start_key_candidates = ["start", "start_time"]
             end_key_candidates = ["end", "end_time"]
 
-            id_key = next((key for key in id_key_candidates if key in first_segment), None)
-            start_key = next((key for key in start_key_candidates if key in first_segment), None)
-            end_key = next((key for key in end_key_candidates if key in first_segment), None)
+            id_key = next(
+                (key for key in id_key_candidates if key in first_segment), None
+            )
+            start_key = next(
+                (key for key in start_key_candidates if key in first_segment), None
+            )
+            end_key = next(
+                (key for key in end_key_candidates if key in first_segment), None
+            )
             print(f"Found keys - id: {id_key}, start: {start_key}, end: {end_key}")
 
             if start_key is None or end_key is None:
