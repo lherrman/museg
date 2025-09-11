@@ -184,6 +184,8 @@ class RightPanel(QWidget):
             position_seconds: Current position in seconds
         """
         self.waveform_widget.update_position(position_seconds)
+        # Also update the label buttons' current position so they use the playback position
+        self.label_buttons.set_current_position(position_seconds)
 
     def set_playback_state(self, state: QMediaPlayer.PlaybackState) -> None:
         """
@@ -222,6 +224,7 @@ class RightPanel(QWidget):
         self.track_info.setText("No track selected")
         self.waveform_widget.clear()
         self.play_controls.update_play_state(False)
+        self.label_buttons.set_current_position(0.0)  # Reset position to start
         self._current_track_name = ""
 
     def set_label_definitions(self, label_definitions) -> None:
