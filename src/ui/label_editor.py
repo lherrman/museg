@@ -1,9 +1,5 @@
 """Label Editor Dialog for managing labels and labeling modes."""
 
-import sys
-from typing import Optional
-
-from pathlib import Path
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -93,12 +89,19 @@ class LabelEditor(QDialog):
         # Label editing controls
         edit_layout = QHBoxLayout()
 
-        # Left side - name and color
+        # Left side - ID, name and color
         left_layout = QVBoxLayout()
 
         form_layout = QFormLayout()
+        
+        self.id_edit = QLineEdit()
+        self.id_edit.textChanged.connect(self._on_id_changed)
+        self.id_edit.setPlaceholderText("Unique identifier (e.g. intro, verse, chorus)")
+        form_layout.addRow("ID:", self.id_edit)
+        
         self.name_edit = QLineEdit()
         self.name_edit.textChanged.connect(self._on_name_changed)
+        self.name_edit.setPlaceholderText("Display name (e.g. Intro, Verse, Chorus)")
         form_layout.addRow("Name:", self.name_edit)
 
         color_layout = QHBoxLayout()
@@ -157,7 +160,9 @@ class LabelEditor(QDialog):
         self.label_list.clear()
 
         for label_data in self.label_manager.get_labels():
-            item = QListWidgetItem(label_data["name"])
+            # Display both name and ID
+            display_text = f"{label_data['name']} ({label_data.get('id', '')})" if label_data.get('id') else label_data['name']
+            item = QListWidgetItem(display_text)
             item.setData(Qt.ItemDataRole.UserRole, label_data)
 
             # Set color indicator
@@ -213,13 +218,34 @@ class LabelEditor(QDialog):
 
         if current_item:
             label_data = current_item.data(Qt.ItemDataRole.UserRole)
+            self.id_edit.setText(label_data.get("id", ""))
             self.name_edit.setText(label_data["name"])
             self._update_color_button(QColor(label_data["color"]))
             self.remove_button.setEnabled(True)
         else:
+            self.id_edit.clear()
             self.name_edit.clear()
             self._update_color_button(QColor(100, 150, 200))
             self.remove_button.setEnabled(False)
+
+    def _on_id_changed(self):
+        """Handle ID edit change."""
+        current_item = self.label_list.currentItem()
+        if current_item and self.id_edit.text().strip():
+            label_data = current_item.data(Qt.ItemDataRole.UserRole)
+            new_id = self.id_edit.text().strip()
+            
+            # Validate ID (alphanumeric and underscores only)
+            if not all(c.isalnum() or c == '_' for c in new_id):
+                # Reset to previous value
+                self.id_edit.setText(label_data.get("id", ""))
+                return
+                
+            label_data["id"] = new_id
+            
+            # Update the display text to show both name and ID
+            current_item.setText(f"{label_data['name']} ({new_id})")
+            current_item.setData(Qt.ItemDataRole.UserRole, label_data)
 
     def _on_name_changed(self):
         """Handle name edit change."""
@@ -227,7 +253,10 @@ class LabelEditor(QDialog):
         if current_item and self.name_edit.text().strip():
             label_data = current_item.data(Qt.ItemDataRole.UserRole)
             label_data["name"] = self.name_edit.text().strip()
-            current_item.setText(label_data["name"])
+            
+            # Update the display text to show both name and ID
+            label_id = label_data.get("id", "")
+            current_item.setText(f"{label_data['name']} ({label_id})" if label_id else label_data['name'])
             current_item.setData(Qt.ItemDataRole.UserRole, label_data)
 
     def _choose_color(self):
@@ -264,19 +293,40 @@ class LabelEditor(QDialog):
     def _add_label(self):
         """Add a new label."""
         name = self.name_edit.text().strip()
+        label_id = self.id_edit.text().strip()
+        
         if not name:
             name = f"Label {self.label_list.count() + 1}"
+            
+        if not label_id:
+            # Generate ID from name
+            label_id = name.lower().replace(" ", "_").replace("-", "_")
+            # Remove any non-alphanumeric characters except underscores
+            label_id = ''.join(c if c.isalnum() or c == '_' else '' for c in label_id)
 
-        # Check for duplicate names
+        # Check for duplicate names and IDs
         existing_names = [
-            self.label_list.item(i).text() for i in range(self.label_list.count())
+            self.label_list.item(i).data(Qt.ItemDataRole.UserRole)["name"] 
+            for i in range(self.label_list.count())
         ]
+        existing_ids = [
+            self.label_list.item(i).data(Qt.ItemDataRole.UserRole).get("id", "") 
+            for i in range(self.label_list.count())
+        ]
+        
         if name in existing_names:
             base_name = name
             counter = 1
             while f"{base_name} {counter}" in existing_names:
                 counter += 1
             name = f"{base_name} {counter}"
+            
+        if label_id in existing_ids:
+            base_id = label_id
+            counter = 1
+            while f"{base_id}_{counter}" in existing_ids:
+                counter += 1
+            label_id = f"{base_id}_{counter}"
 
         # Get color from button or use default
         color = QColor(100, 150, 200)
@@ -287,13 +337,15 @@ class LabelEditor(QDialog):
 
         # Create new label data
         label_data = {
+            "id": label_id,
             "name": name,
             "color": color.name(),
             "key": None,  # Will be assigned when used
+            "description": "",
         }
 
         # Add to list
-        item = QListWidgetItem(name)
+        item = QListWidgetItem(f"{name} ({label_id})")
         item.setData(Qt.ItemDataRole.UserRole, label_data)
         item.setBackground(color)
 
@@ -304,7 +356,8 @@ class LabelEditor(QDialog):
         self.label_list.addItem(item)
         self.label_list.setCurrentItem(item)
 
-        # Clear name field for next label
+        # Clear fields for next label
+        self.id_edit.clear()
         self.name_edit.clear()
 
     def _remove_label(self):
@@ -314,9 +367,10 @@ class LabelEditor(QDialog):
             return
 
         label_data = current_item.data(Qt.ItemDataRole.UserRole)
+        label_identifier = label_data.get("id", label_data["name"])
 
         # Check if label is in use
-        if self.label_manager.is_label_in_use(label_data["name"]):
+        if self.label_manager.is_label_in_use(label_identifier):
             reply = QMessageBox.question(
                 self,
                 "Label In Use",
@@ -338,9 +392,28 @@ class LabelEditor(QDialog):
         try:
             # Collect all labels from the list
             labels = []
+            ids_used = set()
+            
             for i in range(self.label_list.count()):
                 item = self.label_list.item(i)
                 label_data = item.data(Qt.ItemDataRole.UserRole)
+                
+                # Validate required fields
+                if not label_data.get("name", "").strip():
+                    QMessageBox.warning(self, "Validation Error", f"Label at position {i+1} is missing a name.")
+                    return
+                    
+                if not label_data.get("id", "").strip():
+                    QMessageBox.warning(self, "Validation Error", f"Label '{label_data['name']}' is missing an ID.")
+                    return
+                    
+                # Check for duplicate IDs
+                label_id = label_data["id"]
+                if label_id in ids_used:
+                    QMessageBox.warning(self, "Validation Error", f"Duplicate ID '{label_id}' found. Each label must have a unique ID.")
+                    return
+                ids_used.add(label_id)
+                
                 labels.append(label_data)
 
             # Update label manager

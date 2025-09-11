@@ -452,9 +452,11 @@ class LabelManager(QObject):
         definitions = self.label_config.get_label_definitions()
         return [
             {
+                "id": label_def.id,
                 "name": label_def.name,
                 "color": label_def.color,
                 "key": None,  # Will be assigned when used
+                "description": label_def.description,
             }
             for label_def in definitions
         ]
@@ -463,9 +465,17 @@ class LabelManager(QObject):
         """Set label definitions from a list of dictionaries."""
         # Convert to LabelDefinition objects
         definitions = []
-        for i, label_data in enumerate(labels):
+        for label_data in labels:
+            # Use provided ID or generate one from name
+            label_id = label_data.get("id")
+            if not label_id:
+                # Generate ID from name (lowercase, replace spaces with underscores)
+                label_id = label_data["name"].lower().replace(" ", "_").replace("-", "_")
+                # Remove any non-alphanumeric characters except underscores
+                label_id = ''.join(c if c.isalnum() or c == '_' else '' for c in label_id)
+            
             label_def = LabelDefinition(
-                id=f"label_{i}",
+                id=label_id,
                 name=label_data["name"],
                 color=label_data["color"],
                 description=label_data.get("description", ""),
@@ -477,15 +487,15 @@ class LabelManager(QObject):
             label_def.id: label_def for label_def in definitions
         }
 
-    def is_label_in_use(self, label_name: str) -> bool:
+    def is_label_in_use(self, label_name_or_id: str) -> bool:
         """Check if a label is currently being used in any segments."""
         if not self._current_track_labels:
             return False
 
-        # Find the label definition by name
+        # Find the label definition by name or ID
         label_def = None
         for definition in self.label_config.get_label_definitions():
-            if definition.name == label_name:
+            if definition.name == label_name_or_id or definition.id == label_name_or_id:
                 label_def = definition
                 break
 
