@@ -159,11 +159,53 @@ class TrackLabels(QObject):
                 data = json.load(f)
 
             self._segments.clear()
-            for segment_data in data.get("labels", []):
+            label_key_candidates = ["labels", "segments"]
+            labels_key = next(
+                (key for key in label_key_candidates if key in data), None
+            )
+
+            if labels_key is None:
+                raise ValueError(
+                    f"Missing one of the keys {label_key_candidates} in labels file"
+                )
+            print(f"Using labels key: {labels_key}")
+            print(data[labels_key])
+
+            # Get the segments data
+            segments_data = data.get(labels_key, [])
+            if not segments_data:
+                return  # No segments to process
+
+            # Check for key names in the first segment to determine the format
+            first_segment = segments_data[0]
+            
+            id_key_candidates = ["label", "segment_id"]
+            start_key_candidates = ["start", "start_time"]
+            end_key_candidates = ["end", "end_time"]
+
+            id_key = next((key for key in id_key_candidates if key in first_segment), None)
+            start_key = next((key for key in start_key_candidates if key in first_segment), None)
+            end_key = next((key for key in end_key_candidates if key in first_segment), None)
+            print(f"Found keys - id: {id_key}, start: {start_key}, end: {end_key}")
+
+            if start_key is None or end_key is None:
+                raise ValueError(
+                    f"Missing one of the keys {start_key_candidates} or {end_key_candidates} in labels file"
+                )
+
+            if id_key is None:
+                raise ValueError(
+                    f"Missing one of the keys {id_key_candidates} in labels file"
+                )
+
+            print(f"Using id key: {id_key}, start key: {start_key}, end key: {end_key}")
+
+            for segment_data in segments_data:
+                print(segment_data)
                 segment = LabelSegment(
-                    label_id=segment_data["label"],
-                    start_seconds=segment_data["start"],
-                    end_seconds=segment_data["end"],
+                    label_id=segment_data[id_key],
+                    start_seconds=segment_data[start_key],
+                    end_seconds=segment_data[end_key],
                 )
                 self._segments.append(segment)
 

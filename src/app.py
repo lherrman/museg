@@ -756,10 +756,12 @@ class MuSegApp(QMainWindow):
 
     def _show_open_project_dialog(self) -> None:
         """Show dialog to open an existing project by selecting musegproject.json."""
+        project_dir = AppConfig.get_project_directory()
+        project_dir = str(project_dir.parent) if project_dir else str(Path.cwd())
         config_file, _ = QFileDialog.getOpenFileName(
             self,
             "Open Project - Select musegproject.json",
-            "",
+            project_dir,
             "JSON Files (*.json);;All Files (*)",
         )
 
