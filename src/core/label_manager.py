@@ -161,9 +161,9 @@ class TrackLabels(QObject):
             self._segments.clear()
             for segment_data in data.get("labels", []):
                 segment = LabelSegment(
-                    label_id=segment_data["label_id"],
-                    start_seconds=segment_data["start_seconds"],
-                    end_seconds=segment_data["end_seconds"],
+                    label_id=segment_data["label"],
+                    start_seconds=segment_data["start"],
+                    end_seconds=segment_data["end"],
                 )
                 self._segments.append(segment)
 
@@ -192,9 +192,9 @@ class TrackLabels(QObject):
             "track_id": self.track_id,
             "labels": [
                 {
-                    "label_id": segment.label_id,
-                    "start_seconds": segment.start_seconds,
-                    "end_seconds": segment.end_seconds,
+                    "label": segment.label_id,
+                    "start": segment.start_seconds,
+                    "end": segment.end_seconds,
                 }
                 for segment in self._segments
             ],

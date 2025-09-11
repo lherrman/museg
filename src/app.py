@@ -138,6 +138,12 @@ class MuSegApp(QMainWindow):
         open_project_action.triggered.connect(self._show_open_project_dialog)
         file_menu.addAction(open_project_action)
 
+        # Open Recent submenu
+        self.recent_menu = file_menu.addMenu("Open Recent")
+        self._update_recent_projects_menu()
+
+        file_menu.addSeparator()
+
         # Open Project Folder action
         open_folder_action = QAction("Open Project Folder...", self)
         open_folder_action.triggered.connect(self._open_project_folder_dialog)
@@ -688,6 +694,57 @@ class MuSegApp(QMainWindow):
         self.right_panel.set_label_segments(segments)
         self.right_panel.set_audio_duration(duration)
 
+    def _update_recent_projects_menu(self) -> None:
+        """Update the Recent Projects submenu with current recent projects."""
+        # Clear existing actions
+        self.recent_menu.clear()
+
+        # Load recent projects
+        recent_projects = AppConfig.load_recent_projects()
+
+        if recent_projects:
+            # Add recent projects
+            for project_path in recent_projects:
+                action = QAction(
+                    f"{project_path.name} ({project_path.parent.name})", self
+                )
+                action.setToolTip(str(project_path))
+                action.triggered.connect(
+                    lambda checked, path=project_path: self._open_recent_project(path)
+                )
+                self.recent_menu.addAction(action)
+
+            # Add separator and clear recent
+            self.recent_menu.addSeparator()
+            clear_action = QAction("Clear Recent Projects", self)
+            clear_action.triggered.connect(self._clear_recent_projects)
+            self.recent_menu.addAction(clear_action)
+        else:
+            # No recent projects
+            no_recent_action = QAction("No recent projects", self)
+            no_recent_action.setEnabled(False)
+            self.recent_menu.addAction(no_recent_action)
+
+    def _open_recent_project(self, project_path: Path) -> None:
+        """Open a recent project."""
+        if project_path.exists() and (project_path / "musegproject.json").exists():
+            self._set_project_directory(project_path)
+        else:
+            from PySide6.QtWidgets import QMessageBox
+
+            QMessageBox.warning(
+                self,
+                "Project Not Found",
+                f"The project at '{project_path}' no longer exists or is invalid.",
+            )
+            # Update the recent projects menu to remove invalid projects
+            self._update_recent_projects_menu()
+
+    def _clear_recent_projects(self) -> None:
+        """Clear all recent projects."""
+        AppConfig.save_recent_projects([])
+        self._update_recent_projects_menu()
+
     def _show_new_project_dialog(self) -> None:
         """Show dialog to create a new project."""
         project_dir = QFileDialog.getExistingDirectory(
@@ -806,6 +863,9 @@ class MuSegApp(QMainWindow):
         # Clear current audio
         self._stop_playback()
         self.right_panel.reset()
+
+        # Update recent projects menu
+        self._update_recent_projects_menu()
 
     def _remove_file(self, file_path: str) -> None:
         """Remove a file from the library and its associated labels."""

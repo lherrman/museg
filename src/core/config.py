@@ -1,8 +1,9 @@
 """Configuration constants for the Music Segment Labeler application."""
 
 import sys
+import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 
 class AppConfig:
@@ -27,6 +28,9 @@ class AppConfig:
     WAVEFORM_HEIGHT = 300
     CONTROLS_HEIGHT = 120
 
+    # Recent projects settings
+    MAX_RECENT_PROJECTS = 10
+
     # Current project directory
     _current_project_dir: Optional[Path] = None
 
@@ -47,17 +51,82 @@ class AppConfig:
         if not config_file.exists():
             cls._create_default_label_config(config_file)
 
+        # Update recent projects
+        cls.add_recent_project(project_dir)
 
     @classmethod
     def get_project_directory(cls) -> Optional[Path]:
         """Get the current project directory."""
         return cls._current_project_dir
 
+    @classmethod
+    def get_recent_projects_file(cls) -> Path:
+        """Get the path to the recent projects file."""
+        # Store in user's home directory or app data directory
+        if sys.platform == "win32":
+            app_data = Path.home() / "AppData" / "Roaming" / "MuSeg"
+        else:
+            app_data = Path.home() / ".config" / "museg"
+
+        app_data.mkdir(parents=True, exist_ok=True)
+        return app_data / "recent_projects.json"
+
+    @classmethod
+    def load_recent_projects(cls) -> List[Path]:
+        """Load the list of recent projects."""
+        recent_file = cls.get_recent_projects_file()
+        if not recent_file.exists():
+            return []
+
+        try:
+            with open(recent_file, "r") as f:
+                data = json.load(f)
+
+            # Convert strings to Path objects and filter out non-existent projects
+            recent_projects = []
+            for project_path in data.get("recent_projects", []):
+                path = Path(project_path)
+                if path.exists() and (path / "musegproject.json").exists():
+                    recent_projects.append(path)
+
+            return recent_projects[: cls.MAX_RECENT_PROJECTS]
+        except (json.JSONDecodeError, IOError):
+            return []
+
+    @classmethod
+    def save_recent_projects(cls, projects: List[Path]) -> None:
+        """Save the list of recent projects."""
+        recent_file = cls.get_recent_projects_file()
+
+        try:
+            # Convert Path objects to strings
+            projects_data = {
+                "recent_projects": [str(p) for p in projects[: cls.MAX_RECENT_PROJECTS]]
+            }
+
+            with open(recent_file, "w") as f:
+                json.dump(projects_data, f, indent=2)
+        except IOError:
+            # Silently fail if we can't write the file
+            pass
+
+    @classmethod
+    def add_recent_project(cls, project_path: Path) -> None:
+        """Add a project to the recent projects list."""
+        recent_projects = cls.load_recent_projects()
+
+        # Remove the project if it's already in the list
+        recent_projects = [p for p in recent_projects if p != project_path]
+
+        # Add to the beginning of the list
+        recent_projects.insert(0, project_path)
+
+        # Save the updated list
+        cls.save_recent_projects(recent_projects)
+
     @staticmethod
     def _create_default_label_config(config_file: Path) -> None:
         """Create a default label configuration file."""
-        import json
-
         default_config = {
             "labeling_mode": "segmentation",  # "segmentation" or "annotation"
             "label_definitions": [
